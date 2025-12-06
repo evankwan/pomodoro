@@ -28,6 +28,14 @@ const statusText = computed(() => {
 	}
 	return isTimerRunning.value ? "Focus time" : "Paused";
 });
+
+const breakButtonText = computed(() => {
+	if (isTimerFinished.value && isInBreak.value) {
+		return "Start break";
+	}
+
+	return "Resume break";
+});
 </script>
 
 <template>
@@ -35,7 +43,7 @@ const statusText = computed(() => {
 	<h3>Status: {{ statusText }}</h3>
 	<button v-if="!isTimerRunning && !isInBreak" @click="start">Start</button>
 	<button v-if="!isTimerRunning && isInBreak" @click="startBreak">
-		Start break
+		{{ breakButtonText }}
 	</button>
 	<button v-if="isTimerRunning" @click="pause">Pause</button>
 	<button v-if="!isTimerRunning" @click="reset">Reset</button>

@@ -1,7 +1,8 @@
 import { formatTime } from "~/utilities/timeUtilities";
 
 const ONE_SECOND_IN_MS = 1000;
-const DEFAULT_TIMER_LENGTH_IN_MS = 1000 * 15; // 1000 milliseconds per second, * 60 seconds * 25 minutes
+const DEFAULT_TIMER_LENGTH_IN_MS = ONE_SECOND_IN_MS * 60 * 25; // 1000ms * 60s * 25min
+const DEFAULT_BREAK_LENGTH_IN_MS = ONE_SECOND_IN_MS * 60 * 5; // 1000ms * 60s * 5min
 
 export const useTimer = () => {
 	const timer = ref<number>();
@@ -26,11 +27,15 @@ export const useTimer = () => {
 		if (Boolean(timer.value)) {
 			return;
 		}
+		if (remainingTime.value === 0) {
+			remainingTime.value = DEFAULT_TIMER_LENGTH_IN_MS;
+		}
 		isPaused.value = false;
 		hasTimerRun.value = true;
 		timer.value = setInterval(() => {
 			remainingTime.value -= ONE_SECOND_IN_MS;
 			if (remainingTime.value === 0) {
+				isInBreak.value = true;
 				stop();
 			}
 		}, ONE_SECOND_IN_MS);
@@ -54,6 +59,34 @@ export const useTimer = () => {
 		remainingTime.value = DEFAULT_TIMER_LENGTH_IN_MS;
 	};
 
+	const isInBreak = ref<Boolean>(false);
+
+	const startBreak = (): void => {
+		// short circuit to prevent double intervals
+		if (Boolean(timer.value)) {
+			return;
+		}
+
+		if (remainingTime.value === 0) {
+			remainingTime.value = DEFAULT_BREAK_LENGTH_IN_MS;
+		}
+		isPaused.value = false;
+		timer.value = setInterval(() => {
+			remainingTime.value -= ONE_SECOND_IN_MS;
+			if (remainingTime.value === 0) {
+				isInBreak.value = false;
+				stopBreak();
+			}
+		}, ONE_SECOND_IN_MS);
+	};
+
+	const stopBreak = (): void => {
+		clearInterval(timer.value);
+		timer.value = undefined;
+		isPaused.value = false;
+		isInBreak.value = false;
+	};
+
 	return {
 		hasTimerRun,
 		isTimerRunning,
@@ -62,5 +95,8 @@ export const useTimer = () => {
 		start,
 		pause,
 		reset,
+		startBreak,
+		stopBreak,
+		isInBreak,
 	};
 };
